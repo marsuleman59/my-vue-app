@@ -1,278 +1,36 @@
 <script setup>
-import { ref, computed, provide, watch, watchEffect, defineAsyncComponent } from 'vue'
-import HelloWorld from './components/HelloWorld.vue'
-import ThemeDisplay from './components/ThemeDisplay.vue'
-import RatingPicker from './components/RatingPicker.vue'
-import ProductList from './components/ProductList.vue'
-import LifecycleDemo from './components/LifecycleDemo.vue'
-import DefineExposeDemo from './components/DefineExposeDemo.vue'
-import { useCartStore } from './stores/cart'
-
-// 11. defineExpose — template ref to child
-const childRef = ref(null)
-
-// 10. <Suspense> + async component — loaded lazily; Suspense shows fallback until ready
-// defineAsyncComponent(() => import(...)) is the standard way to lazy-load
-const HeavyComponent = defineAsyncComponent(() => import('./components/HeavyComponent.vue'))
-const showHeavy = ref(false)
-
-// 1. Reactive state with ref()
-const count = ref(0)
-const name = ref('')
-const showSecret = ref(false)
-
-// 2. Computed property — auto-updates when count changes
-const doubled = computed(() => count.value * 2)
-
-// 3. Array for v-for demo
-const fruits = ref(['Apple', 'Banana', 'Cherry'])
-
-function addFruit() {
-  const options = ['Mango', 'Grape', 'Peach', 'Kiwi', 'Plum']
-  fruits.value.push(options[Math.floor(Math.random() * options.length)])
-}
-
-// 5. provide / inject
-// provide() makes values available to ALL descendants — no props needed
-const theme = ref('light')
-function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
-}
-provide('theme', theme)
-provide('toggleTheme', toggleTheme)
-
-// 6. emits
-// The child fires an event; the parent catches it here
-const rating = ref(null)
-function onRate(star) {
-  rating.value = star
-}
-
-// 7. Pinia store — shared global state
-// useCartStore() returns the same store instance everywhere it's called
-const cart = useCartStore()
-
-// 8. watch — explicit watcher, gives you old and new value
-// Watches a single ref; only runs when count changes (not on mount)
-const lastCountChange = ref(null)
-watch(count, (newVal, oldVal) => {
-  lastCountChange.value = `${oldVal} → ${newVal}`
-})
-
-// 8b. watchEffect — no explicit source; auto-tracks every reactive value read inside
-// Runs immediately on mount, then re-runs whenever cart.total changes
-watchEffect(() => {
-  document.title = cart.total > 0 ? `Cart (${cart.total}) — My Vue App` : 'My Vue App'
-})
-
-// 9. Lifecycle hooks — show / hide LifecycleDemo to trigger mount / unmount
-// Using v-if (not v-show) so Vue truly creates and destroys the component,
-// which fires onMounted and onUnmounted each time.
-const showLifecycle = ref(true)
+// App.vue is now the router shell — it owns the nav bar and the <RouterView />.
+// All the Vue concept demos moved to src/views/DemoView.vue.
+import { RouterView, RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <div style="font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px;">
-    <!-- Passing a prop to a child component -->
-    <HelloWorld :greeting="name || 'World'" />
+  <!-- Nav bar — RouterLink renders an <a> tag and handles client-side navigation -->
+  <nav style="
+    background: #1e1b4b; padding: 12px 24px;
+    display: flex; gap: 20px; align-items: center;
+    font-family: sans-serif;
+  ">
+    <RouterLink
+      to="/"
+      style="color: white; text-decoration: none; font-weight: 700; font-size: 1.05em;"
+    >
+      Vue Demos
+    </RouterLink>
+    <RouterLink to="/register" style="color: #a5b4fc; text-decoration: none; font-size: 0.95em;">
+      Register (12)
+    </RouterLink>
+  </nav>
 
-
-    <hr />
-
-    <!-- 1. v-model: two-way binding -->
-    <section>
-      <h2>1. v-model (two-way binding)</h2>
-      <input v-model="name" placeholder="Type your name" style="padding: 4px 8px;" />
-      <p>Hello, <strong>{{ name || 'stranger' }}</strong>!</p>
-    </section>
-
-    <hr />
-
-    <!-- 2. ref + computed -->
-    <section>
-      <h2>2. ref &amp; computed</h2>
-      <button @click="count++">Count: {{ count }}</button>
-      <button @click="count--" style="margin-left: 8px;">−</button>
-      <p>Doubled (computed): <strong>{{ doubled }}</strong></p>
-    </section>
-
-    <hr />
-
-    <!-- 3. v-if / v-else -->
-    <section>
-      <h2>3. v-if / v-else</h2>
-      <button @click="showSecret = !showSecret">Toggle secret</button>
-      <p v-if="showSecret">The secret is: <strong>42</strong></p>
-      <p v-else>Secret hidden. Click to reveal.</p>
-    </section>
-
-    <hr />
-
-    <!-- 4. v-for -->
-    <section>
-      <h2>4. v-for (list rendering)</h2>
-      <ul>
-        <li v-for="(fruit, i) in fruits">{{i + 1 + ' ' + fruit }}</li>
-      </ul>
-      <button @click="addFruit">Add random fruit</button>
-    </section>
-
-    <hr />
-
-    <!-- 6. emits -->
-    <section>
-      <h2>6. emits (child → parent)</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        The child calls <code>emit('rate', star)</code>. The parent listens with
-        <code>@rate="onRate"</code> and receives the value.
-      </p>
-      <!-- @rate listens for the 'rate' event emitted by RatingPicker -->
-      <RatingPicker @rate="onRate" />
-      <p v-if="rating">You rated: <strong>{{ rating }} / 5</strong></p>
-      <p v-else style="color: gray;">Pick a star above</p>
-    </section>
-
-    <hr />
-
-    <!-- 5. provide / inject -->
-    <section>
-      <h2>5. provide / inject</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        App.vue calls <code>provide('theme', ...)</code>. The child below reads it
-        with <code>inject('theme')</code> — no prop was passed.
-      </p>
-      <ThemeDisplay />
-    </section>
-
-    <hr />
-
-    <!-- 7. Pinia -->
-    <section>
-      <h2>7. Pinia (global store)</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        <code>ProductList</code> and <code>App.vue</code> both call
-        <code>useCartStore()</code> — they share the exact same state.
-      </p>
-
-      <!-- ProductList adds items to the store -->     
-      <ProductList />
-
-      <hr style="border-style: dashed;" />
-
-      <!-- App.vue reads the same store directly -->
-      <strong>Cart ({{ cart.total }} item{{ cart.total === 1 ? '' : 's' }}):</strong>
-      <p v-if="cart.items.length === 0" style="color: gray;">Empty — add something above</p>
-      <ul v-else>
-        <li v-for="(item, i) in cart.items" :key="i">
-          {{ item }}
-          <button @click="cart.removeItem(i)" style="margin-left: 8px;">Remove</button>
-        </li>
-      </ul>
-    </section>
-
-    <hr />
-
-    <!-- 9. Lifecycle hooks -->
-    <section>
-      <h2>9. Lifecycle hooks</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        The component is wrapped in <code>&lt;KeepAlive&gt;</code>, so toggling it fires
-        <code>onDeactivated</code> / <code>onActivated</code> instead of destroying it.<br />
-        <code>onBeforeMount</code> + <code>onMounted</code> fire once on first creation.<br />
-        <code>onBeforeUnmount</code> + <code>onUnmounted</code> would fire if the parent itself were destroyed.
-      </p>
-      <button @click="showLifecycle = !showLifecycle">
-        {{ showLifecycle ? 'Hide (deactivate)' : 'Show (activate)' }} LifecycleDemo
-      </button>
-      <div style="margin-top: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
-        <KeepAlive>
-          <LifecycleDemo v-if="showLifecycle" />
-        </KeepAlive>
-        <p v-if="!showLifecycle" style="color: gray; font-size: 0.9em; margin: 0;">
-          Component is hidden but kept in memory — toggle back to activate it.
-        </p>
-      </div>
-    </section>
-
-    <hr />
-
-    <!-- 10. Suspense + async component -->
-    <section>
-      <h2>10. &lt;Suspense&gt; + async component</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        <code>HeavyComponent</code> has a top-level <code>await</code> in its
-        <code>&lt;script setup&gt;</code>, making it async.<br />
-        <code>&lt;Suspense&gt;</code> renders the <code>#fallback</code> slot until
-        the component's setup resolves.
-      </p>
-      <button @click="showHeavy = !showHeavy">
-        {{ showHeavy ? 'Unmount' : 'Mount HeavyComponent' }}
-      </button>
-      <div style="margin-top: 10px;">
-        <Suspense v-if="showHeavy">
-          <!-- default slot: the async component -->
-          <HeavyComponent />
-          <!-- fallback slot: shown while awaiting -->
-          <template #fallback>
-            <p style="color: gray;">Loading... (simulated 2 s delay)</p>
-          </template>
-        </Suspense>
-      </div>
-    </section>
-
-    <hr />
-
-    <!-- 11. defineExpose -->
-    <section>
-      <h2>11. defineExpose</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        In <code>&lt;script setup&gt;</code>, everything is private by default.
-        The child calls <code>defineExpose({ count, reset })</code> to opt-in.<br />
-        The parent grabs the instance with <code>ref="childRef"</code> and can
-        then call <code>childRef.reset()</code> or read <code>childRef.count</code>.
-      </p>
-      <!-- ref="childRef" gives us the component instance exposed by defineExpose -->
-      <DefineExposeDemo ref="childRef" />
-      <div style="margin-top: 8px;">
-        <button @click="childRef.increment()">Call child.increment() from parent</button>
-        <button @click="childRef.reset()" style="margin-left: 8px;">Call child.reset() from parent</button>
-        <p style="font-size: 0.9em; color: gray;">
-          Parent reads child state: count =
-          <strong>{{ childRef?.count ?? '—' }}</strong>,
-          message = <strong>"{{ childRef?.message ?? '—' }}"</strong>
-        </p>
-      </div>
-    </section>
-
-    <hr />
-
-    <!-- 8. watch & watchEffect -->
-    <section>
-      <h2>8. watch &amp; watchEffect</h2>
-      <p style="color: gray; font-size: 0.9em;">
-        <code>watch(source, callback)</code> — explicit, only runs when <em>source</em> changes, gives you old + new values.<br />
-        <code>watchEffect(fn)</code> — auto-tracks every reactive value read inside <em>fn</em>, runs immediately on mount.
-      </p>
-
-      <!-- watch demo: uses the count from section 2 above -->
-      <strong>watch — tracking count changes:</strong>
-      <p style="color: gray; font-size: 0.9em;">
-        Defined as <code>watch(count, (newVal, oldVal) => ...)</code>.<br />
-        Increment/decrement the counter in section 2, then check back here.
-      </p>
-      <p>
-        Last change:
-        <span v-if="lastCountChange" style="font-family: monospace; background: #f4f4f4; padding: 2px 6px; border-radius: 4px;">{{ lastCountChange }}</span>
-        <span v-else style="color: gray;">not changed yet</span>
-      </p>
-
-      <!-- watchEffect demo: document title -->
-      <strong>watchEffect — browser tab title:</strong>
-      <p style="color: gray; font-size: 0.9em;">
-        Defined as <code>watchEffect(() => { document.title = cart.total > 0 ? \`Cart (${cart.total})...\` : '...' })</code>.<br />
-        It reads <code>cart.total</code>, so Vue tracks that dependency automatically — no explicit source needed.<br />
-        Add or remove cart items above and watch the browser tab title update.
-      </p>
-    </section>
-  </div>
+  <!-- RouterView renders whichever component matches the current URL -->
+  <RouterView />
 </template>
+
+<style>
+/* Vue Router automatically adds .router-link-exact-active when the href matches exactly */
+nav a.router-link-exact-active {
+  text-decoration: underline !important;
+  color: white !important;
+}
+</style>
+
