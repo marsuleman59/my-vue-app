@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, provide } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
+import ThemeDisplay from './components/ThemeDisplay.vue'
 
 // 1. Reactive state with ref()
 const count = ref(0)
@@ -17,6 +18,15 @@ function addFruit() {
   const options = ['Mango', 'Grape', 'Peach', 'Kiwi', 'Plum']
   fruits.value.push(options[Math.floor(Math.random() * options.length)])
 }
+
+// 5. provide / inject
+// provide() makes values available to ALL descendants — no props needed
+const theme = ref('light')
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+}
+provide('theme', theme)
+provide('toggleTheme', toggleTheme)
 </script>
 
 <template>
@@ -63,6 +73,18 @@ function addFruit() {
         <li v-for="(fruit, i) in fruits">{{i + 1 + ' ' + fruit }}</li>
       </ul>
       <button @click="addFruit">Add random fruit</button>
+    </section>
+
+    <hr />
+
+    <!-- 5. provide / inject -->
+    <section>
+      <h2>5. provide / inject</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        App.vue calls <code>provide('theme', ...)</code>. The child below reads it
+        with <code>inject('theme')</code> — no prop was passed.
+      </p>
+      <ThemeDisplay />
     </section>
   </div>
 </template>
