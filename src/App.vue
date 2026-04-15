@@ -1,11 +1,20 @@
 <script setup>
-import { ref, computed, provide, watch, watchEffect } from 'vue'
+import { ref, computed, provide, watch, watchEffect, defineAsyncComponent } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeDisplay from './components/ThemeDisplay.vue'
 import RatingPicker from './components/RatingPicker.vue'
 import ProductList from './components/ProductList.vue'
 import LifecycleDemo from './components/LifecycleDemo.vue'
+import DefineExposeDemo from './components/DefineExposeDemo.vue'
 import { useCartStore } from './stores/cart'
+
+// 11. defineExpose — template ref to child
+const childRef = ref(null)
+
+// 10. <Suspense> + async component — loaded lazily; Suspense shows fallback until ready
+// defineAsyncComponent(() => import(...)) is the standard way to lazy-load
+const HeavyComponent = defineAsyncComponent(() => import('./components/HeavyComponent.vue'))
+const showHeavy = ref(false)
 
 // 1. Reactive state with ref()
 const count = ref(0)
@@ -181,6 +190,56 @@ const showLifecycle = ref(true)
         </KeepAlive>
         <p v-if="!showLifecycle" style="color: gray; font-size: 0.9em; margin: 0;">
           Component is hidden but kept in memory — toggle back to activate it.
+        </p>
+      </div>
+    </section>
+
+    <hr />
+
+    <!-- 10. Suspense + async component -->
+    <section>
+      <h2>10. &lt;Suspense&gt; + async component</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        <code>HeavyComponent</code> has a top-level <code>await</code> in its
+        <code>&lt;script setup&gt;</code>, making it async.<br />
+        <code>&lt;Suspense&gt;</code> renders the <code>#fallback</code> slot until
+        the component's setup resolves.
+      </p>
+      <button @click="showHeavy = !showHeavy">
+        {{ showHeavy ? 'Unmount' : 'Mount HeavyComponent' }}
+      </button>
+      <div style="margin-top: 10px;">
+        <Suspense v-if="showHeavy">
+          <!-- default slot: the async component -->
+          <HeavyComponent />
+          <!-- fallback slot: shown while awaiting -->
+          <template #fallback>
+            <p style="color: gray;">Loading... (simulated 2 s delay)</p>
+          </template>
+        </Suspense>
+      </div>
+    </section>
+
+    <hr />
+
+    <!-- 11. defineExpose -->
+    <section>
+      <h2>11. defineExpose</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        In <code>&lt;script setup&gt;</code>, everything is private by default.
+        The child calls <code>defineExpose({ count, reset })</code> to opt-in.<br />
+        The parent grabs the instance with <code>ref="childRef"</code> and can
+        then call <code>childRef.reset()</code> or read <code>childRef.count</code>.
+      </p>
+      <!-- ref="childRef" gives us the component instance exposed by defineExpose -->
+      <DefineExposeDemo ref="childRef" />
+      <div style="margin-top: 8px;">
+        <button @click="childRef.increment()">Call child.increment() from parent</button>
+        <button @click="childRef.reset()" style="margin-left: 8px;">Call child.reset() from parent</button>
+        <p style="font-size: 0.9em; color: gray;">
+          Parent reads child state: count =
+          <strong>{{ childRef?.count ?? '—' }}</strong>,
+          message = <strong>"{{ childRef?.message ?? '—' }}"</strong>
         </p>
       </div>
     </section>
