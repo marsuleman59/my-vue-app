@@ -4,6 +4,7 @@ import HelloWorld from './components/HelloWorld.vue'
 import ThemeDisplay from './components/ThemeDisplay.vue'
 import RatingPicker from './components/RatingPicker.vue'
 import ProductList from './components/ProductList.vue'
+import LifecycleDemo from './components/LifecycleDemo.vue'
 import { useCartStore } from './stores/cart'
 
 // 1. Reactive state with ref()
@@ -54,6 +55,11 @@ watch(count, (newVal, oldVal) => {
 watchEffect(() => {
   document.title = cart.total > 0 ? `Cart (${cart.total}) — My Vue App` : 'My Vue App'
 })
+
+// 9. Lifecycle hooks — show / hide LifecycleDemo to trigger mount / unmount
+// Using v-if (not v-show) so Vue truly creates and destroys the component,
+// which fires onMounted and onUnmounted each time.
+const showLifecycle = ref(true)
 </script>
 
 <template>
@@ -153,6 +159,30 @@ watchEffect(() => {
           <button @click="cart.removeItem(i)" style="margin-left: 8px;">Remove</button>
         </li>
       </ul>
+    </section>
+
+    <hr />
+
+    <!-- 9. Lifecycle hooks -->
+    <section>
+      <h2>9. Lifecycle hooks</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        The component is wrapped in <code>&lt;KeepAlive&gt;</code>, so toggling it fires
+        <code>onDeactivated</code> / <code>onActivated</code> instead of destroying it.<br />
+        <code>onBeforeMount</code> + <code>onMounted</code> fire once on first creation.<br />
+        <code>onBeforeUnmount</code> + <code>onUnmounted</code> would fire if the parent itself were destroyed.
+      </p>
+      <button @click="showLifecycle = !showLifecycle">
+        {{ showLifecycle ? 'Hide (deactivate)' : 'Show (activate)' }} LifecycleDemo
+      </button>
+      <div style="margin-top: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+        <KeepAlive>
+          <LifecycleDemo v-if="showLifecycle" />
+        </KeepAlive>
+        <p v-if="!showLifecycle" style="color: gray; font-size: 0.9em; margin: 0;">
+          Component is hidden but kept in memory — toggle back to activate it.
+        </p>
+      </div>
     </section>
 
     <hr />
