@@ -3,6 +3,8 @@ import { ref, computed, provide } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeDisplay from './components/ThemeDisplay.vue'
 import RatingPicker from './components/RatingPicker.vue'
+import ProductList from './components/ProductList.vue'
+import { useCartStore } from './stores/cart'
 
 // 1. Reactive state with ref()
 const count = ref(0)
@@ -35,6 +37,10 @@ const rating = ref(null)
 function onRate(star) {
   rating.value = star
 }
+
+// 7. Pinia store — shared global state
+// useCartStore() returns the same store instance everywhere it's called
+const cart = useCartStore()
 </script>
 
 <template>
@@ -108,6 +114,32 @@ function onRate(star) {
         with <code>inject('theme')</code> — no prop was passed.
       </p>
       <ThemeDisplay />
+    </section>
+
+    <hr />
+
+    <!-- 7. Pinia -->
+    <section>
+      <h2>7. Pinia (global store)</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        <code>ProductList</code> and <code>App.vue</code> both call
+        <code>useCartStore()</code> — they share the exact same state.
+      </p>
+
+      <!-- ProductList adds items to the store -->     
+      <ProductList />
+
+      <hr style="border-style: dashed;" />
+
+      <!-- App.vue reads the same store directly -->
+      <strong>Cart ({{ cart.total }} item{{ cart.total === 1 ? '' : 's' }}):</strong>
+      <p v-if="cart.items.length === 0" style="color: gray;">Empty — add something above</p>
+      <ul v-else>
+        <li v-for="(item, i) in cart.items" :key="i">
+          {{ item }}
+          <button @click="cart.removeItem(i)" style="margin-left: 8px;">Remove</button>
+        </li>
+      </ul>
     </section>
   </div>
 </template>
