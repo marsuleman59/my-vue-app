@@ -2,6 +2,7 @@
 import { ref, computed, provide } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeDisplay from './components/ThemeDisplay.vue'
+import RatingPicker from './components/RatingPicker.vue'
 
 // 1. Reactive state with ref()
 const count = ref(0)
@@ -27,6 +28,13 @@ function toggleTheme() {
 }
 provide('theme', theme)
 provide('toggleTheme', toggleTheme)
+
+// 6. emits
+// The child fires an event; the parent catches it here
+const rating = ref(null)
+function onRate(star) {
+  rating.value = star
+}
 </script>
 
 <template>
@@ -73,6 +81,21 @@ provide('toggleTheme', toggleTheme)
         <li v-for="(fruit, i) in fruits">{{i + 1 + ' ' + fruit }}</li>
       </ul>
       <button @click="addFruit">Add random fruit</button>
+    </section>
+
+    <hr />
+
+    <!-- 6. emits -->
+    <section>
+      <h2>6. emits (child → parent)</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        The child calls <code>emit('rate', star)</code>. The parent listens with
+        <code>@rate="onRate"</code> and receives the value.
+      </p>
+      <!-- @rate listens for the 'rate' event emitted by RatingPicker -->
+      <RatingPicker @rate="onRate" />
+      <p v-if="rating">You rated: <strong>{{ rating }} / 5</strong></p>
+      <p v-else style="color: gray;">Pick a star above</p>
     </section>
 
     <hr />
