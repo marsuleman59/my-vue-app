@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, watch, watchEffect } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeDisplay from './components/ThemeDisplay.vue'
 import RatingPicker from './components/RatingPicker.vue'
@@ -41,6 +41,19 @@ function onRate(star) {
 // 7. Pinia store — shared global state
 // useCartStore() returns the same store instance everywhere it's called
 const cart = useCartStore()
+
+// 8. watch — explicit watcher, gives you old and new value
+// Watches a single ref; only runs when count changes (not on mount)
+const lastCountChange = ref(null)
+watch(count, (newVal, oldVal) => {
+  lastCountChange.value = `${oldVal} → ${newVal}`
+})
+
+// 8b. watchEffect — no explicit source; auto-tracks every reactive value read inside
+// Runs immediately on mount, then re-runs whenever cart.total changes
+watchEffect(() => {
+  document.title = cart.total > 0 ? `Cart (${cart.total}) — My Vue App` : 'My Vue App'
+})
 </script>
 
 <template>
@@ -140,6 +153,37 @@ const cart = useCartStore()
           <button @click="cart.removeItem(i)" style="margin-left: 8px;">Remove</button>
         </li>
       </ul>
+    </section>
+
+    <hr />
+
+    <!-- 8. watch & watchEffect -->
+    <section>
+      <h2>8. watch &amp; watchEffect</h2>
+      <p style="color: gray; font-size: 0.9em;">
+        <code>watch(source, callback)</code> — explicit, only runs when <em>source</em> changes, gives you old + new values.<br />
+        <code>watchEffect(fn)</code> — auto-tracks every reactive value read inside <em>fn</em>, runs immediately on mount.
+      </p>
+
+      <!-- watch demo: uses the count from section 2 above -->
+      <strong>watch — tracking count changes:</strong>
+      <p style="color: gray; font-size: 0.9em;">
+        Defined as <code>watch(count, (newVal, oldVal) => ...)</code>.<br />
+        Increment/decrement the counter in section 2, then check back here.
+      </p>
+      <p>
+        Last change:
+        <span v-if="lastCountChange" style="font-family: monospace; background: #f4f4f4; padding: 2px 6px; border-radius: 4px;">{{ lastCountChange }}</span>
+        <span v-else style="color: gray;">not changed yet</span>
+      </p>
+
+      <!-- watchEffect demo: document title -->
+      <strong>watchEffect — browser tab title:</strong>
+      <p style="color: gray; font-size: 0.9em;">
+        Defined as <code>watchEffect(() => { document.title = cart.total > 0 ? \`Cart (${cart.total})...\` : '...' })</code>.<br />
+        It reads <code>cart.total</code>, so Vue tracks that dependency automatically — no explicit source needed.<br />
+        Add or remove cart items above and watch the browser tab title update.
+      </p>
     </section>
   </div>
 </template>
